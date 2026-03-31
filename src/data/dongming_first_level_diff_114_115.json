@@ -1,0 +1,89 @@
+{
+  "project": "東明社宅",
+  "level": "第一階",
+  "from_year": 114,
+  "to_year": 115,
+  "note": "114 年與 115 年皆以「實付租金（含管理費）」為實際每月支出，差額 = 115 年 − 114 年。",
+  "units": [
+    {
+      "type": "套房/一房型",
+      "rent_area_ping": 13,
+      "year_114": {
+        "rent": 4800,
+        "management_fee": 0,
+        "total_monthly_payment": 4800
+      },
+      "year_115": {
+        "total_monthly_payment": 6672
+      },
+      "difference": {
+        "amount": 1872,
+        "percent": 39.0
+      }
+    },
+    {
+      "type": "套房/一房型",
+      "rent_area_ping": 16,
+      "year_114": {
+        "rent": 7200,
+        "management_fee": 0,
+        "total_monthly_payment": 7200
+      },
+      "year_115": {
+        "total_monthly_payment": 9356
+      },
+      "difference": {
+        "amount": 2156,
+        "percent": 29.9
+      }
+    },
+    {
+      "type": "二房型",
+      "rent_area_ping": 22,
+      "year_114": {
+        "rent": 12000,
+        "management_fee": 0,
+        "total_monthly_payment": 12000
+      },
+      "year_115": {
+        "total_monthly_payment": 13202
+      },
+      "difference": {
+        "amount": 1202,
+        "percent": 10.0
+      }
+    },
+    {
+      "type": "二房型",
+      "rent_area_ping": 26,
+      "year_114": {
+        "rent": 13400,
+        "management_fee": 0,
+        "total_monthly_payment": 13400
+      },
+      "year_115": {
+        "total_monthly_payment": 15357
+      },
+      "difference": {
+        "amount": 1957,
+        "percent": 14.6
+      }
+    },
+    {
+      "type": "三房型",
+      "rent_area_ping": 30,
+      "year_114": {
+        "rent": 14900,
+        "management_fee": 0,
+        "total_monthly_payment": 14900
+      },
+      "year_115": {
+        "total_monthly_payment": 17939
+      },
+      "difference": {
+        "amount": 3039,
+        "percent": 20.4
+      }
+    }
+  ]
+}
