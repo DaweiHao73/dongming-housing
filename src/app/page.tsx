@@ -3,7 +3,6 @@
 import { useState } from "react";
 import data115 from "@/data/dongming115.json";
 import data114 from "@/data/dongming114.json";
-import firstLevelDiff from "@/data/dongming_first_level_diff_114_115.json";
 
 const DATASETS = {
   "115": data115,
@@ -39,7 +38,12 @@ export default function Home() {
   const appendix1LevelLabels = current.appendix_1_rent_table
     .level_labels as Record<string, string>;
   const incomeClassification = current.income_classification;
-  const firstLevelUnits = firstLevelDiff.units;
+  const income114 = DATASETS["114"].income_classification;
+  const income115 = DATASETS["115"].income_classification;
+  const appendix114Units = DATASETS["114"].appendix_1_rent_table
+    .units as any[];
+  const appendix115Units = DATASETS["115"].appendix_1_rent_table
+    .units as any[];
 
   const parsedIncome = Number(
     avgMonthlyIncome.replace(/[^0-9]/g, "")
@@ -100,6 +104,58 @@ export default function Home() {
       ? "border-sky-300 bg-sky-50/80 text-sky-800"
       : "border-emerald-300 bg-emerald-50/80 text-emerald-800"
     : "border-stone-200 bg-stone-50 text-stone-600";
+
+  const appendix114Map: Map<string, any> = new Map(
+    appendix114Units.map((u) => [`${u.type}-${u.rent_area_ping}`, u])
+  );
+
+  const buildLevelComparisonRows = (levelKey114: string, levelKey115: string) =>
+    appendix115Units.map((u115) => {
+      const key = `${u115.type}-${u115.rent_area_ping}`;
+      const u114 = appendix114Map.get(key);
+      const base = (u114?.rent?.[levelKey114] ?? null) as number | null;
+      const next = (u115.rent?.[levelKey115] ?? null) as number | null;
+      const diff =
+        base != null && next != null ? (next as number) - (base as number) : null;
+      const diffPct = diff != null && base ? (diff / base) * 100 : null;
+
+      return {
+        key,
+        type: u115.type as string,
+        rentAreaPing: u115.rent_area_ping as number,
+        base,
+        next,
+        diff,
+        diffPct
+      };
+    });
+
+  const levelComparisons = [
+    {
+      title: "第一階：114 年 vs 115 年租金差異",
+      note:
+        "比較第一階承租戶實際每月支出（114 年：實付租金；115 年：實付租金，皆含管理費）。",
+      rows: buildLevelComparisonRows("第一階", "第一階")
+    },
+    {
+      title: "第二階：114 年 vs 115 年租金差異",
+      note:
+        "比較第二階承租戶實際每月支出（114 年：實付租金；115 年：實付租金，皆含管理費）。",
+      rows: buildLevelComparisonRows("第二階", "第二階")
+    },
+    {
+      title: "第三階（114 年年收低於 108 萬）vs 115 年第三階",
+      note:
+        "114 年第三階依家庭年收入再拆分；本表採「低於 108 萬」情境對照 115 年第三階。",
+      rows: buildLevelComparisonRows("第三階_低於108萬", "第三階")
+    },
+    {
+      title: "第三階（114 年年收 108 萬至 156 萬）vs 115 年第三階",
+      note:
+        "114 年第三階依家庭年收入再拆分；本表採「108 萬至 156 萬」情境對照 115 年第三階。",
+      rows: buildLevelComparisonRows("第三階_108萬至156萬", "第三階")
+    }
+  ];
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-sky-50 text-stone-800">
@@ -510,78 +566,102 @@ export default function Home() {
 
         <section className="mt-6 rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
           <h2 className="text-base font-semibold text-stone-900">
-            第一階：114 年 vs 115 年租金差異
+            114 年 vs 115 年各階租金差異
           </h2>
           <p className="mt-2 text-xs leading-5 text-stone-600">
-            以下以第一階承租戶為例，比較 114 年度與 115 年度「實際每月支出」（114 年：租金 + 管理費；115 年：實付租金，已含管理費）。
+            下方依第一階、第二階、第三階比較兩年度實際每月支出（皆為實付租金，已含管理費）。
           </p>
 
-          <div className="mt-3 overflow-x-auto rounded-2xl border border-stone-200 bg-white">
-            <table className="min-w-full border-separate border-spacing-0 text-xs">
-              <thead>
-                <tr>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
-                    房型 / 坪數
-                  </th>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
-                    114 年實付（租金 + 管理費）
-                  </th>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
-                    115 年實付（含管理費）
-                  </th>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
-                    差額（115 − 114）
-                  </th>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
-                    差異百分比
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {firstLevelUnits.map((u: any) => {
-                  const base = u.year_114.total_monthly_payment;
-                  const next = u.year_115.total_monthly_payment;
-                  const diff = u.difference.amount;
-                  const diffPct = u.difference.percent;
-                  const diffClass =
-                    diff > 0
-                      ? "text-red-600 font-semibold"
-                      : diff < 0
-                      ? "text-emerald-700 font-semibold"
-                      : "text-stone-500";
+          <div className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 px-3 py-3 text-[11px] leading-5 text-stone-600">
+            <p className="font-semibold text-stone-700">薪資級距備註說明</p>
+            <ul className="mt-1 space-y-1">
+              <li>
+                • 第一階：114 年 {income114.levels[0].monthly_income_per_person.text}；115 年{" "}
+                {income115.levels[0].standard}（本頁收入試算顯示為{" "}
+                {income115.levels[0].monthly_income_per_person.text}）。
+              </li>
+              <li>
+                • 第二階：114 年 {income114.levels[1].monthly_income_per_person.text}；115 年{" "}
+                {income115.levels[1].monthly_income_per_person.text}。
+              </li>
+              <li>
+                • 第三階：114 年 {income114.levels[2].monthly_income_per_person.text}，且另依家庭年收拆分「低於 108 萬」與「108 萬至
+                156 萬」；115 年 {income115.levels[2].monthly_income_per_person.text}。
+              </li>
+            </ul>
+          </div>
 
-                  return (
-                    <tr
-                      key={`${u.type}-${u.rent_area_ping}`}
-                      className="bg-white even:bg-stone-50/60"
-                    >
-                      <td className="border-b border-stone-200 px-3 py-3">
-                        <div className="font-semibold">{u.type}</div>
-                        <div className="mt-0.5 text-[11px] text-stone-500">
-                          {u.rent_area_ping} 坪
-                        </div>
-                      </td>
-                      <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums text-stone-500">
-                        {formatNumber(base)}
-                      </td>
-                      <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums font-semibold">
-                        {formatNumber(next)}
-                      </td>
-                      <td
-                        className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
-                      >
-                        {diff === 0 ? "—" : formatNumber(diff)}
-                      </td>
-                      <td
-                        className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
-                      >
-                        {diff === 0 ? "—" : `${diffPct.toFixed(1)}%`}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="mt-4 space-y-5">
+            {levelComparisons.map((group) => (
+              <div key={group.title} className="rounded-2xl border border-stone-200 bg-white">
+                <div className="border-b border-stone-200 bg-stone-50 px-3 py-2">
+                  <h3 className="text-sm font-semibold text-stone-800">{group.title}</h3>
+                  <p className="mt-0.5 text-[11px] text-stone-600">{group.note}</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-separate border-spacing-0 text-xs">
+                    <thead>
+                      <tr>
+                        <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                          房型 / 坪數
+                        </th>
+                        <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
+                          114 年實付（含管理費）
+                        </th>
+                        <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
+                          115 年實付（含管理費）
+                        </th>
+                        <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
+                          差額（115 − 114）
+                        </th>
+                        <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
+                          差異百分比
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.rows.map((row) => {
+                        const diffClass =
+                          row.diff == null || row.diff === 0
+                            ? "text-stone-500"
+                            : row.diff > 0
+                            ? "text-red-600 font-semibold"
+                            : "text-emerald-700 font-semibold";
+
+                        return (
+                          <tr key={row.key} className="bg-white even:bg-stone-50/60">
+                            <td className="border-b border-stone-200 px-3 py-3">
+                              <div className="font-semibold">{row.type}</div>
+                              <div className="mt-0.5 text-[11px] text-stone-500">
+                                {row.rentAreaPing} 坪
+                              </div>
+                            </td>
+                            <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums text-stone-500">
+                              {formatNumber(row.base)}
+                            </td>
+                            <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums font-semibold">
+                              {formatNumber(row.next)}
+                            </td>
+                            <td
+                              className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
+                            >
+                              {row.diff == null || row.diff === 0 ? "—" : formatNumber(row.diff)}
+                            </td>
+                            <td
+                              className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
+                            >
+                              {row.diffPct == null || row.diff === 0
+                                ? "—"
+                                : `${row.diffPct.toFixed(1)}%`}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
           </div>
 
           <p className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-[11px] leading-5 text-stone-600">
