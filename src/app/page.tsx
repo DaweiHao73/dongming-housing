@@ -33,12 +33,66 @@ const formatPercent = (diff: number, base: number) => {
 
 export default function Home() {
   const [year, setYear] = useState<YearKey>("115");
+  const [avgMonthlyIncome, setAvgMonthlyIncome] = useState<string>("");
   const current = DATASETS[year];
 
   const appendix1Units = current.appendix_1_rent_table.units;
   const appendix3Units = current.appendix_3_renewal_table.units;
   const incomeClassification = current.income_classification;
   const firstLevelUnits = firstLevelDiff.units;
+
+  const parsedIncome = Number(
+    avgMonthlyIncome.replace(/[^0-9]/g, "")
+  );
+
+  const getIncomeLevel = () => {
+    if (!parsedIncome || !incomeClassification) return null;
+
+    for (const level of incomeClassification.levels as any[]) {
+      const range = level.monthly_income_per_person;
+      const minOk =
+        range.min == null || parsedIncome >= Number(range.min);
+      const maxOk =
+        range.max == null || parsedIncome <= Number(range.max);
+      if (minOk && maxOk) {
+        return {
+          type: level.level as string,
+          title: level.level as string,
+          description: level.standard as string,
+          text: range.text as string
+        };
+      }
+    }
+
+    const ns = incomeClassification.no_subsidy
+      .monthly_income_per_person;
+    const nsMinOk =
+      ns.min == null || parsedIncome >= Number(ns.min);
+    const nsMaxOk =
+      ns.max == null || parsedIncome <= Number(ns.max);
+
+    if (nsMinOk && nsMaxOk) {
+      return {
+        type: "no_subsidy",
+        title: incomeClassification.no_subsidy.label as string,
+        description: incomeClassification.no_subsidy.condition as string,
+        text: ns.text as string
+      };
+    }
+
+    if (parsedIncome > Number(ns.max ?? 0)) {
+      return {
+        type: "above",
+        title: "高於不補貼級距",
+        description: "超過目前表列之家庭所得範圍",
+        text: ""
+      };
+    }
+
+    return null;
+  };
+
+  const incomeLevel = getIncomeLevel();
 
   return (
     <main className="min-h-screen bg-stone-50 text-stone-800">
@@ -73,6 +127,86 @@ export default function Home() {
           </div>
         </header>
 
+        <section className="mb-6 grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
+          <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-stone-200">
+            <h2 className="text-sm font-semibold">
+              輸入平均每人每月收入，判斷所得級距
+            </h2>
+            <p className="mt-1 text-[11px] text-stone-500">
+              依目前選擇的年度（{year} 年）之「家庭總收入平均每人每月」標準計算。
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="text-xs text-stone-600">
+                家庭總收入平均每人每月
+              </label>
+              <div className="flex flex-1 items-center gap-2">
+                <span className="text-xs text-stone-500">NT$</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="例如 25000"
+                  value={avgMonthlyIncome}
+                  onChange={(e) => setAvgMonthlyIncome(e.target.value)}
+                  className="flex-1 rounded-xl border border-stone-300 bg-stone-50 px-3 py-1.5 text-xs outline-none ring-emerald-500 focus:bg-white focus:ring-2"
+                />
+              </div>
+            </div>
+            <div className="mt-3 rounded-2xl bg-stone-50 px-3 py-3 text-xs">
+              {incomeLevel ? (
+                <div>
+                  <p className="text-stone-500">判斷結果：</p>
+                  <p className="mt-1 text-sm font-semibold">
+                    {incomeLevel.title}
+                  </p>
+                  {incomeLevel.description && (
+                    <p className="mt-1 text-[11px] text-stone-500">
+                      {incomeLevel.description}
+                    </p>
+                  )}
+                  {incomeLevel.text && (
+                    <p className="mt-1 text-[11px] text-stone-500">
+                      （對應標準：{incomeLevel.text}）
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[11px] text-stone-500">
+                  請輸入金額後，即可顯示對應的所得級距。
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-3xl bg-emerald-700 p-5 text-xs text-emerald-50 shadow-sm ring-1 ring-emerald-800/40">
+            <h2 className="text-sm font-semibold text-white">
+              當年度所得門檻摘要（{year} 年）
+            </h2>
+            <ul className="mt-2 space-y-1.5">
+              {incomeClassification.levels.map((level: any) => (
+                <li key={level.level}>
+                  <span className="font-semibold text-emerald-50">
+                    {level.level}：
+                  </span>
+                  <span className="text-emerald-100">
+                    {level.monthly_income_per_person.text}
+                  </span>
+                </li>
+              ))}
+              <li>
+                <span className="font-semibold text-emerald-50">
+                  {incomeClassification.no_subsidy.label}：
+                </span>
+                <span className="text-emerald-100">
+                  {
+                    incomeClassification.no_subsidy
+                      .monthly_income_per_person.text
+                  }
+                </span>
+              </li>
+            </ul>
+          </div>
+        </section>
+
         <section className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
           <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-stone-200">
             <div className="mb-4 flex items-end justify-between gap-2">
@@ -97,13 +231,13 @@ export default function Home() {
                     <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
                       所得級距
                     </th>
-                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                       租金
                     </th>
-                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                       與定價差額
                     </th>
-                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                       差異百分比
                     </th>
                   </tr>
@@ -153,18 +287,18 @@ export default function Home() {
                               {LEVEL_LABEL[levelKey]}
                             </span>
                           </td>
-                          <td className="border-b border-stone-200 px-3 py-2">
+                          <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums">
                             <span className={isBase ? "font-semibold" : ""}>
                               {formatNumber(rent)}
                             </span>
                           </td>
                           <td
-                            className={`border-b border-stone-200 px-3 py-2 ${diffClass}`}
+                            className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
                           >
                             {diff === 0 ? "—" : formatNumber(diff)}
                           </td>
                           <td
-                            className={`border-b border-stone-200 px-3 py-2 ${diffClass}`}
+                            className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
                           >
                             {pctText}
                           </td>
@@ -204,16 +338,16 @@ export default function Home() {
                     <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
                       房型 / 坪數
                     </th>
-                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                       定價租金
                     </th>
-                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                       續租 1.1 倍租金
                     </th>
-                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                       差額
                     </th>
-                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                    <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                       增幅百分比
                     </th>
                   </tr>
@@ -247,19 +381,19 @@ export default function Home() {
                             {u.rent_area_ping} 坪
                           </div>
                         </td>
-                        <td className="border-b border-stone-200 px-3 py-2 text-stone-500">
+                        <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums text-stone-500">
                           {formatNumber(base ?? null)}
                         </td>
-                        <td className="border-b border-stone-200 px-3 py-2 font-semibold">
+                        <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums font-semibold">
                           {formatNumber(renewal)}
                         </td>
                         <td
-                          className={`border-b border-stone-200 px-3 py-2 ${diffClass}`}
+                          className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
                         >
                           {base == null ? "—" : formatNumber(diff)}
                         </td>
                         <td
-                          className={`border-b border-stone-200 px-3 py-2 ${diffClass}`}
+                          className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
                         >
                           {base == null ? "—" : formatPercent(diff, base)}
                         </td>
@@ -293,16 +427,16 @@ export default function Home() {
                   <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
                     房型 / 坪數
                   </th>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                     114 年實付（租金 + 管理費）
                   </th>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                     115 年實付（含管理費）
                   </th>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                     差額（115 − 114）
                   </th>
-                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-left font-semibold text-stone-700">
+                  <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                     差異百分比
                   </th>
                 </tr>
@@ -331,19 +465,19 @@ export default function Home() {
                           {u.rent_area_ping} 坪
                         </div>
                       </td>
-                      <td className="border-b border-stone-200 px-3 py-2 text-stone-500">
+                      <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums text-stone-500">
                         {formatNumber(base)}
                       </td>
-                      <td className="border-b border-stone-200 px-3 py-2 font-semibold">
+                      <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums font-semibold">
                         {formatNumber(next)}
                       </td>
                       <td
-                        className={`border-b border-stone-200 px-3 py-2 ${diffClass}`}
+                        className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
                       >
                         {diff === 0 ? "—" : formatNumber(diff)}
                       </td>
                       <td
-                        className={`border-b border-stone-200 px-3 py-2 ${diffClass}`}
+                        className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
                       >
                         {diff === 0 ? "—" : `${diffPct.toFixed(1)}%`}
                       </td>
