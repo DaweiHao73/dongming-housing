@@ -12,15 +12,6 @@ const DATASETS = {
 
 type YearKey = keyof typeof DATASETS;
 
-const LEVEL_ORDER = ["第一階", "第二階", "第三階", "不補貼_定價租金"] as const;
-
-const LEVEL_LABEL: Record<(typeof LEVEL_ORDER)[number], string> = {
-  第一階: "第一階",
-  第二階: "第二階",
-  第三階: "第三階",
-  不補貼_定價租金: "不補貼（定價）"
-};
-
 const formatNumber = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("zh-TW");
 
@@ -38,6 +29,10 @@ export default function Home() {
 
   const appendix1Units = current.appendix_1_rent_table.units;
   const appendix3Units = current.appendix_3_renewal_table.units;
+  const appendix1LevelOrder = current.appendix_1_rent_table
+    .level_order as string[];
+  const appendix1LevelLabels = current.appendix_1_rent_table
+    .level_labels as Record<string, string>;
   const incomeClassification = current.income_classification;
   const firstLevelUnits = firstLevelDiff.units;
 
@@ -114,7 +109,7 @@ export default function Home() {
             租金分級與續租 1.1 倍租金差異
           </h1>
           <p className="relative mt-3 max-w-3xl text-sm leading-7 text-emerald-50/95 md:text-base">
-            使用「115 年社宅所得分級標準表」附表一、附表三資料，直接比較各所得級距相較「不補貼（定價租金）」的租金差額及折扣百分比，
+            使用各年度「社宅所得分級標準表」附表一、附表三資料，直接比較各所得級距相較「不補貼（定價租金）」的租金差額及折扣百分比，
             以及續租條件下 1.1 倍租金的增加幅度。
           </p>
           <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -186,6 +181,12 @@ export default function Home() {
                       （對應標準：{incomeLevel.text}）
                     </p>
                   )}
+                  {year === "114" && incomeLevel.type === "第三階" && (
+                    <p className="mt-1 text-[11px] opacity-90">
+                      （114 年第三階另依家庭年所得拆分為「低於 108
+                      萬」與「108 萬至 156 萬」兩段租金）
+                    </p>
+                  )}
                 </div>
               ) : (
                 <p className="text-[11px]">
@@ -222,6 +223,11 @@ export default function Home() {
                 </span>
               </li>
             </ul>
+            {year === "114" && (
+              <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[11px] leading-5 text-emerald-100">
+                註：114 年第三階租金再依家庭年所得拆分兩段，頁面下方租金表已分開顯示。
+              </p>
+            )}
           </div>
         </section>
 
@@ -262,18 +268,27 @@ export default function Home() {
                 </thead>
                 <tbody>
                   {appendix1Units.map((unit) => {
-                    const base = unit.rent["不補貼_定價租金"];
-                    return LEVEL_ORDER.map((levelKey, index) => {
-                      const rent = unit.rent[levelKey];
+                    const rentMap = unit.rent as Record<string, number | null>;
+                    const base = rentMap["不補貼_定價租金"];
+                    return appendix1LevelOrder.map((levelKey, index) => {
+                      const rent = rentMap[levelKey];
                       const isBase = levelKey === "不補貼_定價租金";
-                      const diff = isBase ? 0 : rent - base;
+                      const diff =
+                        isBase
+                          ? 0
+                          : rent == null || base == null
+                          ? null
+                          : rent - base;
                       const diffClass =
-                        diff === 0
+                        diff == null || diff === 0
                           ? "text-stone-400"
                           : diff < 0
                           ? "text-emerald-700 font-semibold"
                           : "text-red-600 font-semibold";
-                      const pctText = formatPercent(diff, base);
+                      const pctText =
+                        diff == null || base == null
+                          ? "—"
+                          : formatPercent(diff, base);
 
                       return (
                         <tr
@@ -284,7 +299,7 @@ export default function Home() {
                         >
                           {index === 0 && (
                             <td
-                              rowSpan={LEVEL_ORDER.length}
+                              rowSpan={appendix1LevelOrder.length}
                               className="border-b border-stone-200 px-3 py-3 align-top"
                             >
                               <div className="font-semibold">{unit.type}</div>
@@ -302,7 +317,7 @@ export default function Home() {
                                   : "bg-stone-100 text-stone-700")
                               }
                             >
-                              {LEVEL_LABEL[levelKey]}
+                              {appendix1LevelLabels[levelKey] ?? levelKey}
                             </span>
                           </td>
                           <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums">
@@ -313,7 +328,7 @@ export default function Home() {
                           <td
                             className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
                           >
-                            {diff === 0 ? "—" : formatNumber(diff)}
+                            {diff == null || diff === 0 ? "—" : formatNumber(diff)}
                           </td>
                           <td
                             className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}

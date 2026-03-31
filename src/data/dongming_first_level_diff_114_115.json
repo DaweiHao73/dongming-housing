@@ -41,48 +41,48 @@
       "type": "二房型",
       "rent_area_ping": 22,
       "year_114": {
-        "rent": 12000,
+        "rent": 11300,
         "management_fee": 0,
-        "total_monthly_payment": 12000
+        "total_monthly_payment": 11300
       },
       "year_115": {
         "total_monthly_payment": 13202
       },
       "difference": {
-        "amount": 1202,
-        "percent": 10.0
+        "amount": 1902,
+        "percent": 16.8
       }
     },
     {
       "type": "二房型",
       "rent_area_ping": 26,
       "year_114": {
-        "rent": 13400,
+        "rent": 12600,
         "management_fee": 0,
-        "total_monthly_payment": 13400
+        "total_monthly_payment": 12600
       },
       "year_115": {
         "total_monthly_payment": 15357
       },
       "difference": {
-        "amount": 1957,
-        "percent": 14.6
+        "amount": 2757,
+        "percent": 21.9
       }
     },
     {
       "type": "三房型",
       "rent_area_ping": 30,
       "year_114": {
-        "rent": 14900,
+        "rent": 13900,
         "management_fee": 0,
-        "total_monthly_payment": 14900
+        "total_monthly_payment": 13900
       },
       "year_115": {
         "total_monthly_payment": 17939
       },
       "difference": {
-        "amount": 3039,
-        "percent": 20.4
+        "amount": 4039,
+        "percent": 29.1
       }
     }
   ]
