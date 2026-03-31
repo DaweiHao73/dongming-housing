@@ -12,6 +12,7 @@ const DATASETS = {
 } as const;
 
 type YearKey = keyof typeof DATASETS;
+type ComparisonKey = "113-114" | "114-115";
 
 const formatNumber = (n: number | null | undefined) =>
   n == null ? "—" : n.toLocaleString("zh-TW");
@@ -30,6 +31,7 @@ const ATTACHMENT3_115_URL =
 
 export default function Home() {
   const [year, setYear] = useState<YearKey>("115");
+  const [comparisonKey, setComparisonKey] = useState<ComparisonKey>("114-115");
   const [avgMonthlyIncome, setAvgMonthlyIncome] = useState<string>("");
   const current = DATASETS[year];
 
@@ -40,11 +42,17 @@ export default function Home() {
   const appendix1LevelLabels = current.appendix_1_rent_table
     .level_labels as Record<string, string>;
   const incomeClassification = current.income_classification;
-  const income114 = DATASETS["114"].income_classification;
-  const income115 = DATASETS["115"].income_classification;
-  const appendix114Units = DATASETS["114"].appendix_1_rent_table
+  const [comparisonFromYear, comparisonToYear] = comparisonKey.split("-") as [
+    YearKey,
+    YearKey
+  ];
+  const comparisonFromDataset = DATASETS[comparisonFromYear];
+  const comparisonToDataset = DATASETS[comparisonToYear];
+  const incomeFrom = comparisonFromDataset.income_classification;
+  const incomeTo = comparisonToDataset.income_classification;
+  const comparisonFromUnits = comparisonFromDataset.appendix_1_rent_table
     .units as any[];
-  const appendix115Units = DATASETS["115"].appendix_1_rent_table
+  const comparisonToUnits = comparisonToDataset.appendix_1_rent_table
     .units as any[];
 
   const parsedIncome = Number(
@@ -107,24 +115,24 @@ export default function Home() {
       : "border-emerald-300 bg-emerald-50/80 text-emerald-800"
     : "border-stone-200 bg-stone-50 text-stone-600";
 
-  const appendix114Map: Map<string, any> = new Map(
-    appendix114Units.map((u) => [`${u.type}-${u.rent_area_ping}`, u])
+  const comparisonFromMap: Map<string, any> = new Map(
+    comparisonFromUnits.map((u) => [`${u.type}-${u.rent_area_ping}`, u])
   );
 
-  const buildLevelComparisonRows = (levelKey114: string, levelKey115: string) =>
-    appendix115Units.map((u115) => {
-      const key = `${u115.type}-${u115.rent_area_ping}`;
-      const u114 = appendix114Map.get(key);
-      const base = (u114?.rent?.[levelKey114] ?? null) as number | null;
-      const next = (u115.rent?.[levelKey115] ?? null) as number | null;
+  const buildLevelComparisonRows = (levelKeyFrom: string, levelKeyTo: string) =>
+    comparisonToUnits.map((uTo) => {
+      const key = `${uTo.type}-${uTo.rent_area_ping}`;
+      const uFrom = comparisonFromMap.get(key);
+      const base = (uFrom?.rent?.[levelKeyFrom] ?? null) as number | null;
+      const next = (uTo.rent?.[levelKeyTo] ?? null) as number | null;
       const diff =
         base != null && next != null ? (next as number) - (base as number) : null;
       const diffPct = diff != null && base ? (diff / base) * 100 : null;
 
       return {
         key,
-        type: u115.type as string,
-        rentAreaPing: u115.rent_area_ping as number,
+        type: uTo.type as string,
+        rentAreaPing: uTo.rent_area_ping as number,
         base,
         next,
         diff,
@@ -132,32 +140,73 @@ export default function Home() {
       };
     });
 
+  const thirdTierSplitConfig: Record<
+    YearKey,
+    {
+      lowKey: string | null;
+      highKey: string | null;
+      lowLabel: string;
+      highLabel: string;
+    }
+  > = {
+    "113": {
+      lowKey: "第三階_低於102萬",
+      highKey: "第三階_102萬至144萬",
+      lowLabel: "家庭年收低於 102 萬",
+      highLabel: "家庭年收 102 萬至 144 萬"
+    },
+    "114": {
+      lowKey: "第三階_低於108萬",
+      highKey: "第三階_108萬至156萬",
+      lowLabel: "家庭年收低於 108 萬",
+      highLabel: "家庭年收 108 萬至 156 萬"
+    },
+    "115": {
+      lowKey: null,
+      highKey: null,
+      lowLabel: "",
+      highLabel: ""
+    }
+  };
+
+  const fromSplit = thirdTierSplitConfig[comparisonFromYear];
+  const toThirdKey = "第三階";
+
   const levelComparisons = [
     {
-      title: "第一階：114 年 vs 115 年租金差異",
+      title: `第一階：${comparisonFromYear} 年 vs ${comparisonToYear} 年租金差異`,
       note:
-        "比較第一階承租戶實際每月支出（114 年：實付租金；115 年：實付租金，皆含管理費）。",
+        `比較第一階承租戶實際每月支出（${comparisonFromYear} 年：實付租金；${comparisonToYear} 年：實付租金，皆含管理費）。`,
       rows: buildLevelComparisonRows("第一階", "第一階")
     },
     {
-      title: "第二階：114 年 vs 115 年租金差異",
+      title: `第二階：${comparisonFromYear} 年 vs ${comparisonToYear} 年租金差異`,
       note:
-        "比較第二階承租戶實際每月支出（114 年：實付租金；115 年：實付租金，皆含管理費）。",
+        `比較第二階承租戶實際每月支出（${comparisonFromYear} 年：實付租金；${comparisonToYear} 年：實付租金，皆含管理費）。`,
       rows: buildLevelComparisonRows("第二階", "第二階")
-    },
-    {
-      title: "第三階（114 年年收低於 108 萬）vs 115 年第三階",
-      note:
-        "114 年第三階依家庭年收入再拆分；本表採「低於 108 萬」情境對照 115 年第三階。",
-      rows: buildLevelComparisonRows("第三階_低於108萬", "第三階")
-    },
-    {
-      title: "第三階（114 年年收 108 萬至 156 萬）vs 115 年第三階",
-      note:
-        "114 年第三階依家庭年收入再拆分；本表採「108 萬至 156 萬」情境對照 115 年第三階。",
-      rows: buildLevelComparisonRows("第三階_108萬至156萬", "第三階")
     }
   ];
+
+  if (fromSplit.lowKey && fromSplit.highKey) {
+    levelComparisons.push(
+      {
+        title: `第三階（${comparisonFromYear} 年${fromSplit.lowLabel}）vs ${comparisonToYear} 年第三階`,
+        note: `${comparisonFromYear} 年第三階依家庭年收入再拆分；本表採「${fromSplit.lowLabel}」情境對照 ${comparisonToYear} 年第三階。`,
+        rows: buildLevelComparisonRows(fromSplit.lowKey, toThirdKey)
+      },
+      {
+        title: `第三階（${comparisonFromYear} 年${fromSplit.highLabel}）vs ${comparisonToYear} 年第三階`,
+        note: `${comparisonFromYear} 年第三階依家庭年收入再拆分；本表採「${fromSplit.highLabel}」情境對照 ${comparisonToYear} 年第三階。`,
+        rows: buildLevelComparisonRows(fromSplit.highKey, toThirdKey)
+      }
+    );
+  } else {
+    levelComparisons.push({
+      title: `第三階：${comparisonFromYear} 年 vs ${comparisonToYear} 年租金差異`,
+      note: `比較第三階承租戶實際每月支出（${comparisonFromYear} 年：實付租金；${comparisonToYear} 年：實付租金，皆含管理費）。`,
+      rows: buildLevelComparisonRows("第三階", "第三階")
+    });
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-sky-50 text-stone-800">
@@ -575,9 +624,28 @@ export default function Home() {
         </section>
 
         <section className="mt-6 rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-semibold text-stone-900">
-            114 年 vs 115 年各階租金差異
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-stone-900">
+              {comparisonFromYear} 年 vs {comparisonToYear} 年各階租金差異
+            </h2>
+            <div className="inline-flex rounded-full border border-stone-200 bg-stone-50 p-1 text-xs">
+              {(["114-115", "113-114"] as ComparisonKey[]).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setComparisonKey(key)}
+                  className={
+                    "rounded-full px-3 py-1.5 font-semibold transition " +
+                    (comparisonKey === key
+                      ? "bg-emerald-600 text-white"
+                      : "text-stone-600 hover:bg-white")
+                  }
+                >
+                  {key.replace("-", " vs ")}
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="mt-2 text-xs leading-5 text-stone-600">
             下方依第一階、第二階、第三階比較兩年度實際每月支出（皆為實付租金，已含管理費）。
           </p>
@@ -586,17 +654,24 @@ export default function Home() {
             <p className="font-semibold text-stone-700">薪資級距備註說明</p>
             <ul className="mt-1 space-y-1">
               <li>
-                • 第一階：114 年 {income114.levels[0].monthly_income_per_person.text}；115 年{" "}
-                {income115.levels[0].standard}（本頁收入試算顯示為{" "}
-                {income115.levels[0].monthly_income_per_person.text}）。
+                • 第一階：{comparisonFromYear} 年{" "}
+                {incomeFrom.levels[0].monthly_income_per_person.text}；{comparisonToYear} 年{" "}
+                {incomeTo.levels[0].standard}（本頁收入試算顯示為{" "}
+                {incomeTo.levels[0].monthly_income_per_person.text}）。
               </li>
               <li>
-                • 第二階：114 年 {income114.levels[1].monthly_income_per_person.text}；115 年{" "}
-                {income115.levels[1].monthly_income_per_person.text}。
+                • 第二階：{comparisonFromYear} 年{" "}
+                {incomeFrom.levels[1].monthly_income_per_person.text}；{comparisonToYear} 年{" "}
+                {incomeTo.levels[1].monthly_income_per_person.text}。
               </li>
               <li>
-                • 第三階：114 年 {income114.levels[2].monthly_income_per_person.text}，且另依家庭年收拆分「低於 108 萬」與「108 萬至
-                156 萬」；115 年 {income115.levels[2].monthly_income_per_person.text}。
+                • 第三階：{comparisonFromYear} 年{" "}
+                {incomeFrom.levels[2].monthly_income_per_person.text}
+                {fromSplit.lowKey && fromSplit.highKey
+                  ? `，且另依家庭年收拆分「${fromSplit.lowLabel}」與「${fromSplit.highLabel}」`
+                  : ""}
+                ；{comparisonToYear} 年{" "}
+                {incomeTo.levels[2].monthly_income_per_person.text}。
               </li>
             </ul>
           </div>
@@ -616,13 +691,13 @@ export default function Home() {
                           房型 / 坪數
                         </th>
                         <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
-                          114 年實付（含管理費）
+                          {comparisonFromYear} 年實付（含管理費）
                         </th>
                         <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
-                          115 年實付（含管理費）
+                          {comparisonToYear} 年實付（含管理費）
                         </th>
                         <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
-                          差額（115 − 114）
+                          差額（{comparisonToYear} − {comparisonFromYear}）
                         </th>
                         <th className="border-b border-stone-200 bg-stone-100 px-3 py-2 text-right font-semibold text-stone-700">
                           差異百分比
@@ -675,7 +750,8 @@ export default function Home() {
           </div>
 
           <p className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-[11px] leading-5 text-stone-600">
-            註：差額 = 115 年實付 − 114 年實付；差異百分比 = 差額 ÷ 114 年實付。
+            註：差額 = {comparisonToYear} 年實付 − {comparisonFromYear} 年實付；差異百分比 = 差額 ÷{" "}
+            {comparisonFromYear} 年實付。
           </p>
         </section>
 
