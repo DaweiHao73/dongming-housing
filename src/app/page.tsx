@@ -22,6 +22,11 @@ const formatPercent = (diff: number, base: number) => {
   return `${sign}${pct.toFixed(1)}%`;
 };
 
+const ATTACHMENT3_114_URL =
+  "https://rent.thurc.org.taipei/documents/immediate/%E9%99%84%E4%BB%B63_%E8%88%88%E9%9A%86D1%E5%8D%80%E7%AD%8911%E8%99%95%E7%A4%BE%E6%9C%83%E4%BD%8F%E5%AE%85%E6%89%80%E5%BE%97%E7%B4%9A%E8%B7%9D%E5%8F%8A%E5%88%86%E7%B4%9A%E8%A3%9C%E8%B2%BC%E7%A7%9F%E9%87%91%E8%A1%A8.pdf";
+const ATTACHMENT3_115_URL =
+  "https://rent.thurc.org.taipei/documents/dongming/%E9%99%84%E4%BB%B63_%E6%89%80%E5%BE%97%E7%B4%9A%E8%B7%9D%E5%88%86%E7%B4%9A%E6%A8%99%E6%BA%96%E8%A1%A8%E5%8F%8A%E7%A7%9F%E9%87%91%E8%A3%9C%E8%B2%BC%E8%A1%A8.pdf";
+
 export default function Home() {
   const [year, setYear] = useState<YearKey>("115");
   const [avgMonthlyIncome, setAvgMonthlyIncome] = useState<string>("");
@@ -136,6 +141,36 @@ export default function Home() {
               <span>資料來源附表一、附表三</span>
             </div>
           </div>
+          <p className="relative mt-3 text-xs text-emerald-100/95">
+            資料來源：
+            <a
+              href={ATTACHMENT3_114_URL}
+              target="_blank"
+              rel="noreferrer"
+              className={
+                "ml-1 underline underline-offset-2 " +
+                (year === "114"
+                  ? "decoration-white/80 text-white"
+                  : "decoration-emerald-200/80 hover:text-white")
+              }
+            >
+              114 年附件 3（11 處社宅）
+            </a>
+            <span className="mx-1 text-emerald-200/90">｜</span>
+            <a
+              href={ATTACHMENT3_115_URL}
+              target="_blank"
+              rel="noreferrer"
+              className={
+                "underline underline-offset-2 " +
+                (year === "115"
+                  ? "decoration-white/80 text-white"
+                  : "decoration-emerald-200/80 hover:text-white")
+              }
+            >
+              115 年附件 3（東明）
+            </a>
+          </p>
         </header>
 
         <section className="mb-6 grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1.2fr)]">
@@ -347,7 +382,35 @@ export default function Home() {
               <p>• 差額 = 本級距租金 − 不補貼（定價租金）。</p>
               <p>• 差異百分比 = 差額 ÷ 不補貼（定價租金）。</p>
               <p>• 負值代表相較定價租金「較便宜」的幅度。</p>
-              <p>• 資料來源：附表一「社宅租金分級表」（東明社宅）。</p>
+              <p>
+                • 資料來源：附表一「社宅租金分級表」（東明社宅）。
+                {year === "114" && (
+                  <>
+                    {" "}
+                    <a
+                      href={ATTACHMENT3_114_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline decoration-stone-400 underline-offset-2 hover:text-emerald-700"
+                    >
+                      114 年附件 3 PDF
+                    </a>
+                  </>
+                )}
+                {year === "115" && (
+                  <>
+                    {" "}
+                    <a
+                      href={ATTACHMENT3_115_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline decoration-stone-400 underline-offset-2 hover:text-emerald-700"
+                    >
+                      115 年附件 3 PDF
+                    </a>
+                  </>
+                )}
+              </p>
             </div>
           </div>
 
