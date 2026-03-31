@@ -3,10 +3,12 @@
 import { useState } from "react";
 import data115 from "@/data/dongming115.json";
 import data114 from "@/data/dongming114.json";
+import data113 from "@/data/dongming113.json";
 
 const DATASETS = {
   "115": data115,
-  "114": data114
+  "114": data114,
+  "113": data113
 } as const;
 
 type YearKey = keyof typeof DATASETS;
@@ -175,7 +177,7 @@ export default function Home() {
           </p>
           <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3">
             <div className="inline-flex rounded-full border border-white/20 bg-white/10 p-1 text-xs backdrop-blur">
-              {(["115", "114"] as YearKey[]).map((y) => (
+              {(["115", "114", "113"] as YearKey[]).map((y) => (
                 <button
                   key={y}
                   type="button"
@@ -272,10 +274,9 @@ export default function Home() {
                       （對應標準：{incomeLevel.text}）
                     </p>
                   )}
-                  {year === "114" && incomeLevel.type === "第三階" && (
+                  {year !== "115" && incomeLevel.type === "第三階" && (
                     <p className="mt-1 text-[11px] opacity-90">
-                      （114 年第三階另依家庭年所得拆分為「低於 108
-                      萬」與「108 萬至 156 萬」兩段租金）
+                      （{year} 年第三階另依家庭年所得拆分，租金表會以兩段情境分開呈現）
                     </p>
                   )}
                 </div>
@@ -314,9 +315,9 @@ export default function Home() {
                 </span>
               </li>
             </ul>
-            {year === "114" && (
+            {year !== "115" && (
               <p className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[11px] leading-5 text-emerald-100">
-                註：114 年第三階租金再依家庭年所得拆分兩段，頁面下方租金表已分開顯示。
+                註：{year} 年第三階租金再依家庭年所得拆分兩段，頁面下方租金表已分開顯示。
               </p>
             )}
           </div>
@@ -505,61 +506,70 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody>
-                  {appendix3Units.map((u) => {
-                    const base = appendix1Units.find(
-                      (x) =>
-                        x.type === u.type &&
-                        x.rent_area_ping === u.rent_area_ping
-                    )?.rent["不補貼_定價租金"];
-
-                    const renewal = u.rent_1_1x;
-                    const diff =
-                      base != null && renewal != null ? renewal - base : 0;
-                    const diffClass =
-                      diff > 0
-                        ? "text-red-600 font-semibold"
-                        : diff < 0
-                        ? "text-emerald-700 font-semibold"
-                        : "text-stone-400";
-
-                    return (
-                      <tr
-                        key={`${u.type}-${u.rent_area_ping}`}
-                        className="bg-white even:bg-stone-50/60"
+                  {appendix3Units.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="border-b border-stone-200 px-3 py-4 text-center text-[11px] text-stone-500"
                       >
-                        <td className="border-b border-stone-200 px-3 py-3">
-                          <div className="font-semibold">{u.type}</div>
-                          <div className="mt-0.5 text-[11px] text-stone-500">
-                            {u.rent_area_ping} 坪
-                          </div>
-                        </td>
-                        <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums text-stone-500">
-                          {formatNumber(base ?? null)}
-                        </td>
-                        <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums font-semibold">
-                          {formatNumber(renewal)}
-                        </td>
-                        <td
-                          className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
+                        本年度尚無 1.1 倍租金明細資料。
+                      </td>
+                    </tr>
+                  ) : (
+                    appendix3Units.map((u) => {
+                      const base = appendix1Units.find(
+                        (x) =>
+                          x.type === u.type &&
+                          x.rent_area_ping === u.rent_area_ping
+                      )?.rent["不補貼_定價租金"];
+
+                      const renewal = u.rent_1_1x;
+                      const diff =
+                        base != null && renewal != null ? renewal - base : 0;
+                      const diffClass =
+                        diff > 0
+                          ? "text-red-600 font-semibold"
+                          : diff < 0
+                          ? "text-emerald-700 font-semibold"
+                          : "text-stone-400";
+
+                      return (
+                        <tr
+                          key={`${u.type}-${u.rent_area_ping}`}
+                          className="bg-white even:bg-stone-50/60"
                         >
-                          {base == null ? "—" : formatNumber(diff)}
-                        </td>
-                        <td
-                          className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
-                        >
-                          {base == null ? "—" : formatPercent(diff, base)}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          <td className="border-b border-stone-200 px-3 py-3">
+                            <div className="font-semibold">{u.type}</div>
+                            <div className="mt-0.5 text-[11px] text-stone-500">
+                              {u.rent_area_ping} 坪
+                            </div>
+                          </td>
+                          <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums text-stone-500">
+                            {formatNumber(base ?? null)}
+                          </td>
+                          <td className="border-b border-stone-200 px-3 py-2 text-right tabular-nums font-semibold">
+                            {formatNumber(renewal)}
+                          </td>
+                          <td
+                            className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
+                          >
+                            {base == null ? "—" : formatNumber(diff)}
+                          </td>
+                          <td
+                            className={`border-b border-stone-200 px-3 py-2 text-right tabular-nums ${diffClass}`}
+                          >
+                            {base == null ? "—" : formatPercent(diff, base)}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
 
             <p className="mt-4 rounded-2xl border border-stone-200 bg-stone-50 px-3 py-3 text-[11px] leading-5 text-stone-600">
-              續租 1.1 倍租金適用情形：續租時承租人育有二名以上二十歲以下家庭成員，家庭年所得為申請續租當年度本市
-              50% 分位點家庭之平均所得以上，其所得總額平均分配家庭成員人口數，平均每人每月不超過本市最低生活費標準之
-              3.5 倍，且申請續租時同意續租期間以原租金之 1.1 倍計收。
+              續租 1.1 倍租金適用情形：{current.appendix_3_renewal_table.conditions_text}
             </p>
           </div>
         </section>

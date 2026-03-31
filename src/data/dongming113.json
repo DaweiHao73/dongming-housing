@@ -1,0 +1,140 @@
+{
+  "document_title": "113年社宅所得分級標準表",
+  "income_classification": {
+    "applicable_condition": "家庭年所得40%分位點以下（家庭年收總收入144萬元以下）",
+    "levels": [
+      {
+        "level": "第一階",
+        "standard": "未達最低生活費收入標準1倍",
+        "monthly_income_per_person": {
+          "min": null,
+          "max": 19013,
+          "text": "家庭總收入平均每人每月19,013元以下"
+        }
+      },
+      {
+        "level": "第二階",
+        "standard": "未達最低生活費收入標準1.5倍",
+        "monthly_income_per_person": {
+          "min": 19014,
+          "max": 28520,
+          "text": "家庭總收入平均每人每月19,014元至28,520元"
+        }
+      },
+      {
+        "level": "第三階",
+        "standard": "未達最低生活費收入標準2.5倍",
+        "monthly_income_per_person": {
+          "min": 28521,
+          "max": 47533,
+          "text": "家庭總收入平均每人每月28,521元至47,533元"
+        }
+      }
+    ],
+    "no_subsidy": {
+      "label": "不補貼（定價租金）",
+      "condition": "家庭所得40%～50%分位點",
+      "annual_household_income": {
+        "min": 1440000,
+        "max": 1630000,
+        "text": "家庭年總收入144萬元以上163萬元以下"
+      },
+      "monthly_income_per_person": {
+        "min": 47534,
+        "max": 66546,
+        "text": "家庭總收入平均每人每月47,534元以上（推估至最低生活費標準3.5倍）"
+      }
+    }
+  },
+  "appendix_1_rent_table": {
+    "title": "附表二 社宅租金分級表",
+    "housing_project": "東明社宅",
+    "level_order": [
+      "第一階",
+      "第二階",
+      "第三階_低於102萬",
+      "第三階_102萬至144萬",
+      "不補貼_定價租金"
+    ],
+    "level_labels": {
+      "第一階": "第一階",
+      "第二階": "第二階",
+      "第三階_低於102萬": "第三階（家庭年收低於102萬）",
+      "第三階_102萬至144萬": "第三階（家庭年收102萬至144萬）",
+      "不補貼_定價租金": "不補貼（定價）"
+    },
+    "units": [
+      {
+        "type": "套房/一房型",
+        "rent_area_ping": 13,
+        "management_area_ping": 16,
+        "management_fee": 1120,
+        "rent": {
+          "第一階": 4800,
+          "第二階": 5800,
+          "第三階_低於102萬": 7800,
+          "第三階_102萬至144萬": null,
+          "不補貼_定價租金": 9400
+        }
+      },
+      {
+        "type": "套房/一房型",
+        "rent_area_ping": 16,
+        "management_area_ping": 18,
+        "management_fee": 1260,
+        "rent": {
+          "第一階": 7200,
+          "第二階": 8200,
+          "第三階_低於102萬": 10200,
+          "第三階_102萬至144萬": null,
+          "不補貼_定價租金": 11400
+        }
+      },
+      {
+        "type": "二房型",
+        "rent_area_ping": 22,
+        "management_area_ping": 26,
+        "management_fee": 1820,
+        "rent": {
+          "第一階": 11300,
+          "第二階": 12000,
+          "第三階_低於102萬": 13300,
+          "第三階_102萬至144萬": 15300,
+          "不補貼_定價租金": 15800
+        }
+      },
+      {
+        "type": "二房型",
+        "rent_area_ping": 26,
+        "management_area_ping": 29,
+        "management_fee": 2030,
+        "rent": {
+          "第一階": 12600,
+          "第二階": 13300,
+          "第三階_低於102萬": 16500,
+          "第三階_102萬至144萬": 18500,
+          "不補貼_定價租金": 18600
+        }
+      },
+      {
+        "type": "三房型",
+        "rent_area_ping": 30,
+        "management_area_ping": 35,
+        "management_fee": 2450,
+        "rent": {
+          "第一階": 13900,
+          "第二階": 14600,
+          "第三階_低於102萬": 19900,
+          "第三階_102萬至144萬": 21500,
+          "不補貼_定價租金": 21500
+        }
+      }
+    ]
+  },
+  "appendix_3_renewal_table": {
+    "title": "續租1.1倍租金對照表",
+    "housing_project": "東明社宅",
+    "conditions_text": "113 年附件未提供東明社宅 1.1 倍租金明細。",
+    "units": []
+  }
+}
